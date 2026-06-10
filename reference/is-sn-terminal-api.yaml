@@ -1,0 +1,789 @@
+openapi: 3.1.0
+info:
+  version: 0.0.1
+  title: POS PAX Public API
+servers:
+  - url: 'https://tbd.dev.icadsistemi.com/v1'
+    description: development
+  - url: 'https://tbd.prod.icadsistemi.com/v1'
+    description: production
+paths:
+  /closures:
+    get:
+      tags:
+        - Closures
+      summary: Used to obtain closure terminal data
+      description: |-
+        It can be used to get closure data of the current period or for a previous closure.
+        In the second case, it receives a datetime as input to determine the range of the requested closure.
+      operationId: get-closures
+      parameters:
+        - name: closure_datetime
+          in: query
+          description: 'Optional. If set, the endpoint will look for an old closure that include the requested datetime. The format for this timestamp is UNIX time in s (example: 1697444252)'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetClosureOutput'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '422':
+          description: Unprocessable Entity (WebDAV)
+      security:
+        - Cognito: []
+      servers:
+        - url: 'https://tbd.dev.icadsistemi.com/v1'
+          description: development
+        - url: 'https://tbd.prod.icadsistemi.com/v1'
+          description: production
+  /closures/reset:
+    post:
+      tags:
+        - Closures
+      summary: ''
+      description: |-
+        After the terminal has printed its closure receipt, it can call this endpoint to close the closure process and reset all the counts.
+        So, the next closure, will start from the moment when this closure has been reset.
+      operationId: post-closures-reset
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetClosureOutput'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - Cognito: []
+      servers:
+        - url: 'https://tbd.dev.icadsistemi.com/v1'
+          description: development
+        - url: 'https://tbd.prod.icadsistemi.com/v1'
+          description: production
+  /configuration:
+    get:
+      tags:
+        - Configuration
+      summary: Terminal configuration
+      description: 'First endpoint to be called after login, returns terminal configuration.'
+      operationId: get-configuration
+      parameters:
+        - name: Terminal-Serial-Number
+          in: header
+          description: S/N of the PAX POS
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '500':
+          description: Internal Server Error
+      security:
+        - Cognito: []
+      servers:
+        - url: 'https://tbd.dev.icadsistemi.com/v1'
+          description: development
+        - url: 'https://tbd.prod.icadsistemi.com/v1'
+          description: production
+    post:
+      tags:
+        - Configuration
+      summary: Save terminal configuration
+      description: Save terminal configuration as JSON
+      operationId: post-configuration
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+      security:
+        - Cognito: []
+      servers:
+        - url: 'https://tbd.dev.icadsistemi.com/v1'
+          description: development
+        - url: 'https://tbd.prod.icadsistemi.com/v1'
+          description: production
+  /configuration/ack:
+    post:
+      tags:
+        - Configuration
+      summary: ''
+      description: 'Endpoint to call when a configuration phase (first or forced dll) is completed to inform the server about the result, success or not.'
+      operationId: post-configuration-ack
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                guid:
+                  type: string
+                  description: Unique identifier for ACK request
+                is_success:
+                  type: boolean
+                  description: Represent if the dll is completed with success or not
+                error_description:
+                  type: string
+                  description: Inform the host about the error occurred. Present only if the request is a NACK
+              required:
+                - guid
+                - is_success
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Terminal not found
+        '422':
+          description: Unprocessable Entity (malformed or missing input)
+        '500':
+          description: Internal Server Error
+      security:
+        - Cognito: []
+      servers:
+        - url: 'https://tbd.dev.icadsistemi.com/v1'
+          description: development
+        - url: 'https://tbd.prod.icadsistemi.com/v1'
+          description: production
+  /fuelcoupons/abort:
+    delete:
+      tags:
+        - Fuelcoupons
+      summary: Abort fuel coupon transaction
+      description: Used to abort a fuel coupon transaction. It's used if the validation phase is interrupted.
+      operationId: delete-fuelcoupons-abort
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuelcouponAbortInput'
+          application/xml:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuelcouponAbortOutput'
+      security:
+        - Cognito: []
+      servers:
+        - url: 'https://tbd.dev.icadsistemi.com/v1'
+          description: development
+        - url: 'https://tbd.prod.icadsistemi.com/v1'
+          description: production
+  /fuelcoupons/activate:
+    post:
+      tags:
+        - Fuelcoupons
+      summary: Activate fuelcoupons
+      description: ''
+      operationId: activate-fuelcoupons
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateFuelcouponInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivateFuelcouponOutput'
+      security:
+        - Cognito: []
+      servers:
+        - url: 'https://tbd.dev.icadsistemi.com/v1'
+          description: development
+        - url: 'https://tbd.prod.icadsistemi.com/v1'
+          description: production
+  /fuelcoupons/reversal/info:
+    get:
+      tags:
+        - Fuelcoupons
+      summary: Fuelcoupons Reversal info
+      operationId: get-fuelcoupons-reversal-info
+      parameters:
+        - name: fuelcoupon_code
+          in: query
+          description: Fuelcoupon full code
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoPosFuelcouponReversalOutput'
+                __errors__:
+                  '#/components/schemas/InfoPosFuelcouponReversalOutput': No foreign doc with id components found
+        '401':
+          description: Unauthorized
+        '422':
+          description: Unprocessable Entity (WebDAV)
+        '500':
+          description: Internal Server Error
+      security:
+        - Cognito: []
+      servers:
+        - url: 'https://tbd.dev.icadsistemi.com/v1'
+          description: development
+        - url: 'https://tbd.prod.icadsistemi.com/v1'
+          description: production
+  /fuelcoupons/reversal/validate:
+    post:
+      tags:
+        - Fuelcoupons
+      summary: Validate fuelcoupon
+      description: Used to validate a fuel ccoupon before a reversal operation.
+      operationId: post-fuelcoupons-validate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuelcouponReversalValidationInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuelcouponReversalValidationOutput'
+      security:
+        - Cognito: []
+      servers:
+        - url: 'https://tbd.dev.icadsistemi.com/v1'
+          description: development
+        - url: 'https://tbd.prod.icadsistemi.com/v1'
+          description: production
+  /fuelcoupons/validate:
+    post:
+      tags:
+        - Fuelcoupons
+      summary: Validate fuelcoupon
+      operationId: post-fuelcoupons-reversal-validate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuelcouponValidationInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuelcouponValidationOutput'
+      security:
+        - Cognito: []
+      servers:
+        - url: 'https://tbd.dev.icadsistemi.com/v1'
+          description: development
+        - url: 'https://tbd.prod.icadsistemi.com/v1'
+          description: production
+  /transactions/fuelcoupons:
+    post:
+      tags:
+        - Fuelcoupons
+      summary: Fuelcoupon transaction
+      operationId: post-transactions-fuelcoupons
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuelcouponTransactionInput'
+              __errors__:
+                '#/components/schemas/Products': No foreign doc with id components found
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoPosFuelcouponReversalOutput'
+                __errors__:
+                  '#/components/schemas/InfoPosFuelcouponReversalOutput': No foreign doc with id components found
+      security:
+        - Cognito: []
+      servers:
+        - url: 'https://tbd.dev.icadsistemi.com/v1'
+          description: development
+        - url: 'https://tbd.prod.icadsistemi.com/v1'
+          description: production
+  /transactions/fuelcoupons/reversal:
+    post:
+      tags:
+        - Fuelcoupons
+      summary: Reversal fuelcoupon transaction
+      description: Send transactionid for reversal fuelcoupon request
+      operationId: fc-reversal
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuelcouponTransactionReversalInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuelcouponReversalOutput'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoPosFuelcouponReversalOutput'
+                __errors__:
+                  '#/components/schemas/InfoPosFuelcouponReversalOutput': No foreign doc with id components found
+      security:
+        - Cognito: []
+      servers:
+        - url: 'https://tbd.dev.icadsistemi.com/v1'
+          description: development
+        - url: 'https://tbd.prod.icadsistemi.com/v1'
+          description: production
+  /transactions/fuelcoupons/reversal/auto:
+    post:
+      tags:
+        - Fuelcoupons
+      summary: Automatic reversal fuelcoupon transaction
+      description: The endpoint is used to automatically reverse a fuel coupon transaction.
+      operationId: post-automatic-fc-reversal
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                receipt_number:
+                  type: integer
+                  description: Receipt number
+                original_transaction_code:
+                  type: string
+                  description: Code of the transaction to be reversed
+                original_transaction_date_time:
+                  type: string
+                  description: Datetime of the transaction to be reversed
+                  format: date-time
+                stan:
+                  type: number
+              required:
+                - receipt_number
+                - original_transaction_code
+                - original_transaction_date_time
+                - stan
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoPosFuelcouponReversalOutput'
+                __errors__:
+                  '#/components/schemas/InfoPosFuelcouponReversalOutput': No foreign doc with id components found
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoPosFuelcouponReversalOutput'
+                __errors__:
+                  '#/components/schemas/InfoPosFuelcouponReversalOutput': No foreign doc with id components found
+      security:
+        - Cognito: []
+      servers:
+        - url: 'https://tbd.dev.icadsistemi.com/v1'
+          description: development
+        - url: 'https://tbd.prod.icadsistemi.com/v1'
+          description: production
+components:
+  securitySchemes:
+    Cognito:
+      type: oauth2
+      flows:
+        password:
+          refreshUrl: ''
+          tokenUrl: ''
+          scopes: {}
+  schemas:
+    GetClosureOutput:
+      type: object
+      title: GetClosureOutput
+      properties:
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        amount:
+          type: number
+        operations:
+          type: integer
+    ResetClosureOutput:
+      type: object
+      title: ResetClosureOutput
+      properties:
+        action_code:
+          type: string
+    Configuration:
+      type: object
+      description: First/Forced dll
+      properties:
+        terminal_id:
+          type: string
+        supplier_id:
+          type: integer
+          description: To be deprecated
+        guid:
+          type: string
+          description: 'Represent the dll unique identifier '
+        articles:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              name:
+                type: string
+              is_oil:
+                type: boolean
+              unit_price:
+                type: number
+              measure_unit_id:
+                type: integer
+              precision:
+                type: integer
+              category_id:
+                type: integer
+        card_types:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              code:
+                type: integer
+              is_gt:
+                type: boolean
+                description: True if this is an external gt cards
+              is_payment_card:
+                type: boolean
+                description: True if the card can be used as a payment card
+        circuits:
+          type: object
+          properties:
+            fuel_cards:
+              type: boolean
+            fuelcoupons:
+              type: boolean
+            credit_cards:
+              type: boolean
+        fuelcoupons:
+          type: object
+          properties:
+            one_shot_automatic_amount:
+              type: boolean
+              description: If true the pos will not ask user for amount in case of one shot fuelcoupons
+        fuel_station:
+          type: object
+          properties:
+            is_code:
+              type: string
+            merchant_code:
+              type: string
+            can_recharge:
+              type: boolean
+            fiscal_printer:
+              type: boolean
+        measure_units:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              measure_unit:
+                type: string
+        passwords:
+          type: object
+          properties:
+            password_manager:
+              type: string
+            password_installer:
+              type: string
+        payment_modes:
+          type: object
+          properties:
+            recharges:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+            data_collection:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+        supplier:
+          type: object
+          properties:
+            id:
+              type: string
+            max_amount:
+              type: number
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              code:
+                $ref: '#/components/schemas/code'
+      examples: []
+    code:
+      type: string
+    FuelcouponAbortInput:
+      type: object
+      properties:
+        transaction_code:
+          type: string
+    FuelcouponAbortOutput:
+      type: object
+      title: FuelcouponAbortOutput
+      properties:
+        action_code:
+          type: string
+    ActivateFuelcouponInput:
+      type: object
+      properties:
+        fuelcoupon_codes:
+          type: array
+          items:
+            type: string
+    ActivateFuelcouponOutput:
+      type: object
+      title: ActivateFuelcouponOutput
+      properties:
+        action_code:
+          type: string
+    FuelcouponReversalValidationInput:
+      type: object
+      properties:
+        fuelcoupons_codes:
+          type: array
+          items:
+            type: string
+      required:
+        - fuelcoupons_codes
+    FuelcouponReversalValidationOutput:
+      type: object
+      title: FuelcouponReversalValidationOutput
+      properties:
+        display:
+          type: array
+          description: Display data
+          items:
+            type: object
+            properties:
+              font:
+                type: string
+              message:
+                type: string
+            required:
+              - font
+              - message
+        transaction_code:
+          type: string
+          description: This identifier is used to relates the fuelcoupons to the same transaction. The identifier returned here must be used for further validations (if needed) and for the final supply operation.
+        err_fuel_coupon_number:
+          type: integer
+          description: Number of the first fuel coupon that threw a validation error (if any)
+      required:
+        - display
+        - transaction_code
+      examples: []
+    FuelcouponValidationInput:
+      type: object
+      properties:
+        fuelcoupon_code:
+          type: string
+        transaction_code:
+          type: string
+          description: Mandatory only if multiple fuelcoupon code are used for transaction
+      required:
+        - fuelcoupon_code
+    FuelcouponValidationOutput:
+      type: object
+      title: FuelcouponValidationOutput
+      properties:
+        display:
+          type: array
+          description: Display data
+          items:
+            type: object
+            properties:
+              font:
+                type: string
+              message:
+                type: string
+            required:
+              - font
+              - message
+        transaction_code:
+          type: string
+          description: 'This identifier is used to relates the fuelcoupons to the same transaction. So for the same transaction, if the user wants to use multiple fuelcoupons, the POS should send everytime the same transaction_id for each call to this API'
+        locked_amount:
+          type: integer
+          description: Available amount for the used fuelcoupon
+        fuel_coupon_number:
+          type: integer
+        fuel_coupon_welfare:
+          type: boolean
+        fuel_coupon_vat:
+          type: number
+          description: VAT applied when the coupon was bought.
+          minimum: 0
+          maximum: 100
+          examples:
+            - 22
+        fuel_coupon_type:
+          type: integer
+          description: 'Type of the fuel coupon, could be 0 for one shot fuelcoupons or 1 for multi use fuelcoupons'
+      required:
+        - display
+        - transaction_code
+        - locked_amount
+        - fuel_coupon_number
+        - fuel_coupon_welfare
+        - fuel_coupon_vat
+      examples: []
+    FuelcouponTransactionInput:
+      type: object
+      title: FuelcouponTransactionInput
+      properties:
+        transaction_number:
+          type: integer
+        transaction_code:
+          type: string
+        supplies_ov_ids:
+          type: array
+          items:
+            type: integer
+        articles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Products'
+        date_time:
+          type: string
+          format: date-time
+        stan:
+          type: integer
+    FuelcouponTransactionReversalInput:
+      type: object
+      properties:
+        transaction_number:
+          type: integer
+        stan:
+          type: integer
+        transaction_code:
+          type: string
+        original_transaction_code:
+          $ref: '#/components/schemas/transaction_code'
+        reversal_transaction_date_time:
+          type: string
+      required:
+        - transaction_number
+        - stan
+        - transaction_code
+        - reversal_transaction_date_time
+    transaction_code:
+      type: string
+    FuelcouponReversalOutput:
+      type: object
+      properties:
+        ticket:
+          type: array
+          items:
+            type: object
+            properties:
+              content:
+                type: string
+              font:
+                type: string
+        display:
+          type: array
+          items:
+            type: object
+            properties:
+              content:
+                type: string
+              font:
+                type: string
+security:
+  - Cognito: []
