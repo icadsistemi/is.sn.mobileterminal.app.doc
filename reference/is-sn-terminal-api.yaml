@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   version: 0.0.1
-  title: POS PAX Public API
+  title: Mobile Terminal Public API
 servers:
   - url: "https://tbd.dev.icadsistemi.com/v1"
     description: development
@@ -78,13 +78,6 @@ paths:
         - Configuration
       summary: Terminal configuration
       description: "First endpoint to be called after login, returns terminal configuration."
-      operationId: get-configuration
-      parameters:
-        - name: Terminal-Serial-Number
-          in: header
-          description: S/N of the PAX POS
-          schema:
-            type: string
       responses:
         "200":
           description: OK
@@ -611,7 +604,7 @@ components:
           properties:
             one_shot_automatic_amount:
               type: boolean
-              description: If true the pos will not ask user for amount in case of one shot fuelcoupons
+              description: If true the terminal will not ask user for amount in case of one shot fuelcoupons
         fuel_station:
           type: object
           properties:
@@ -772,7 +765,7 @@ components:
               - message
         transaction_code:
           type: string
-          description: "This identifier is used to relates the fuelcoupons to the same transaction. So for the same transaction, if the user wants to use multiple fuelcoupons, the POS should send everytime the same transaction_id for each call to this API"
+          description: "This identifier is used to relates the fuelcoupons to the same transaction. So for the same transaction, if the user wants to use multiple fuelcoupons, the terminal should send everytime the same transaction_id for each call to this API"
         locked_amount:
           type: integer
           description: Available amount for the used fuelcoupon
