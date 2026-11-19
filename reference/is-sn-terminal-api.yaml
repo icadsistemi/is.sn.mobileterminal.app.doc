@@ -2,6 +2,24 @@ openapi: 3.1.0
 info:
   version: 0.0.1
   title: Mobile Terminal Public API
+  description: |-
+    ## Status codes
+
+    The response body of the endpoints contains a `status_code` field that describes the outcome of the request.
+    The possible values are:
+
+    | Status code | Name | Description |
+    |-------------|------|-------------|
+    | `SI000` | OK | The request has been processed successfully |
+    | `SI001` | Invalid input | The input of the request is missing or not valid |
+    | `SI002` | Circuit not enabled | The requested circuit is not enabled for the terminal |
+    | `SI003` | Not found | The requested resource has not been found |
+    | `SI004` | Database error | An error occurred while reading or writing data |
+    | `SI005` | Unauthorized | The terminal is not authorized to perform the request |
+    | `SI006` | Fuel Coupon Validator Error | An error occurred while calling the fuel coupon validator |
+    | `SI007` | Fuel Coupon Not Valid | The fuel coupon is not valid |
+    | `SI008` | Fuel Coupon Not Allowed | The fuel coupon is not allowed for the request |
+    | `SI999` | Generic error | Unexpected error |
 servers:
   - url: "https://tbd.dev.icadsistemi.com/v1"
     description: development
@@ -34,8 +52,12 @@ paths:
           description: Unauthorized
         "403":
           description: Forbidden
+        "404":
+          description: NotFound
         "422":
           description: Unprocessable Entity (WebDAV)
+        "500":
+          description: Internal Server Error
       security:
         - Cognito: []
       servers:
@@ -59,12 +81,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResetClosureOutput"
-        "400":
-          description: Bad Request
-        "401":
-          description: Unauthorized
         "403":
           description: Forbidden
+        "500":
+          description: Internal Server Error
       security:
         - Cognito: []
       servers:
@@ -85,12 +105,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Configuration"
-        "400":
-          description: Bad Request
         "401":
           description: Unauthorized
         "403":
           description: Forbidden
+        "404":
+          description: Not Found
         "500":
           description: Internal Server Error
       security:
@@ -147,8 +167,12 @@ paths:
       responses:
         "200":
           description: OK
+        "403":
+          description: Forbidden
         "404":
-          description: Terminal not found
+          description: Not Found
+        "409":
+          description: Conflict
         "422":
           description: Unprocessable Entity (malformed or missing input)
         "500":
@@ -182,6 +206,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FuelcouponAbortOutput"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
       security:
         - Cognito: []
       servers:
@@ -208,6 +238,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ActivateFuelcouponOutput"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "422":
+          description: Unprocessable Entity (malformed or missing input)
+        "500":
+          description: Internal Server Error
       security:
         - Cognito: []
       servers:
@@ -536,11 +574,13 @@ components:
           type: number
         operations:
           type: integer
+        status_code:
+          type: string
     ResetClosureOutput:
       type: object
       title: ResetClosureOutput
       properties:
-        action_code:
+        status_code:
           type: string
     Configuration:
       type: object
@@ -548,9 +588,6 @@ components:
       properties:
         terminal_id:
           type: string
-        supplier_id:
-          type: integer
-          description: To be deprecated
         guid:
           type: string
           description: "Represent the dll unique identifier "
@@ -614,8 +651,6 @@ components:
               type: string
             can_recharge:
               type: boolean
-            fiscal_printer:
-              type: boolean
         measure_units:
           type: array
           items:
@@ -659,7 +694,7 @@ components:
           type: object
           properties:
             id:
-              type: string
+              type: integer
             max_amount:
               type: number
         categories:
@@ -673,9 +708,49 @@ components:
                 type: string
               code:
                 $ref: "#/components/schemas/code"
+        enabled_card_types:
+          type: array
+          items:
+            type: integer
+        card_types_operations:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        status_code:
+          type: string
       examples: []
     code:
       type: string
+    StatusCode:
+      title: StatusCode
+      type: string
+      description: |-
+        Outcome of the request:
+        * `SI000` - OK
+        * `SI001` - Invalid input
+        * `SI002` - Circuit not enabled
+        * `SI003` - Not found
+        * `SI004` - Database error
+        * `SI005` - Unauthorized
+        * `SI006` - Fuel Coupon Validator Error
+        * `SI007` - Fuel Coupon Not Valid
+        * `SI008` - Fuel Coupon Not Allowed
+        * `SI999` - Generic error
+      enum:
+        - SI000
+        - SI001
+        - SI002
+        - SI003
+        - SI004
+        - SI005
+        - SI006
+        - SI007
+        - SI008
+        - SI999
+      examples:
+        - SI000
     FuelcouponAbortInput:
       type: object
       properties:
@@ -685,7 +760,7 @@ components:
       type: object
       title: FuelcouponAbortOutput
       properties:
-        action_code:
+        status_code:
           type: string
     ActivateFuelcouponInput:
       type: object
@@ -698,7 +773,16 @@ components:
       type: object
       title: ActivateFuelcouponOutput
       properties:
-        action_code:
+        activation_details:
+          type: object
+          properties: 
+            total_amount: 
+              type: numbber
+            fuelcoupons:
+              type: array
+              items:
+                type: string
+        status_code:
           type: string
     FuelcouponReversalValidationInput:
       type: object
