@@ -19,6 +19,7 @@ info:
     | `SI006` | Fuel Coupon Validator Error | An error occurred while calling the fuel coupon validator |
     | `SI007` | Fuel Coupon Not Valid | The fuel coupon is not valid |
     | `SI008` | Fuel Coupon Not Allowed | The fuel coupon is not allowed for the request |
+    | `SI009` | Transaction Already Reversed | The transaction has already been reversed |
     | `SI999` | Generic error | Unexpected error |
 servers:
   - url: "https://tbd.dev.icadsistemi.com/v1"
@@ -262,20 +263,29 @@ paths:
       parameters:
         - name: fuelcoupon_code
           in: query
-          description: Fuelcoupon full code
+          required: true
+          description: Fuelcoupon full code. Codes shorter than 25 characters are left padded with zeros, longer codes are truncated to the first 25 characters.
           schema:
             type: string
       responses:
         "200":
-          description: OK
+          description: OK. `status_code` is `SI000` if a reversable transaction has been found, `SI009` if the transaction has already been reversed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoPosFuelcouponReversalOutput"
+        "400":
+          description: Bad Request. The `fuelcoupon_code` query parameter is missing or empty (`SI001`).
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/InfoPosFuelcouponReversalOutput"
         "401":
           description: Unauthorized
-        "422":
-          description: Unprocessable Entity (WebDAV)
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
         "500":
           description: Internal Server Error
       security:
@@ -475,27 +485,13 @@ components:
     InfoPosFuelcouponReversalOutput:
       title: InfoPosTransactionReversal
       type: object
-      examples:
-        - update_required: true
-          requires_pin: true
-          total_amount: 0
-          original_transaction_number: 0
-          original_transaction_date_time: "2019-08-24T14:15:22Z"
-          supplies:
-            - article_name: string
-              amount: 0
-              unit_price: 0
-              quantity: 0
-              is_oil: true
-              fuelcoupon_id: 0
-              fuelcoupon_number: string
       properties:
         update_required:
           type: boolean
           description: true if the terminal must update its settings
         requires_pin:
           type: boolean
-          description: "true if the pin mandatory for the next reversal "
+          description: true if the pin is mandatory for the next reversal. Currently always false.
         total_amount:
           type: number
           description: "Transaction total amount, the sum of each article amount"
@@ -505,7 +501,7 @@ components:
         original_transaction_date_time:
           type: string
           format: date-time
-          description: Reversable transaction date time
+          description: Reversable transaction date time (Europe/Rome time zone)
           readOnly: true
         original_transaction_code:
           type: string
@@ -515,6 +511,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SuppliesFuelcoupon"
+        status_code:
+          type: string
+          description: Outcome of the request (see Status codes)
       required:
         - update_required
         - requires_pin
@@ -523,6 +522,7 @@ components:
         - original_transaction_date_time
         - original_transaction_code
         - supplies
+        - status_code
     SuppliesFuelcoupon:
       title: SuppliesFuelcoupon
       type: array
@@ -737,6 +737,7 @@ components:
         * `SI006` - Fuel Coupon Validator Error
         * `SI007` - Fuel Coupon Not Valid
         * `SI008` - Fuel Coupon Not Allowed
+        * `SI009` - Transaction Already Reversed
         * `SI999` - Generic error
       enum:
         - SI000
@@ -748,6 +749,7 @@ components:
         - SI006
         - SI007
         - SI008
+        - SI009
         - SI999
       examples:
         - SI000
