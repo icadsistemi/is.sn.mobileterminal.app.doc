@@ -300,9 +300,9 @@ paths:
       tags:
         - Fuelcoupons
       summary: Validate fuelcoupon
-      description: Used to validate a fuel ccoupon before a reversal operation.
       operationId: post-fuelcoupons-validate
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -314,6 +314,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FuelcouponReversalValidationOutput"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
       security:
         - Cognito: []
       servers:
@@ -353,6 +359,7 @@ paths:
       summary: Fuelcoupon transaction
       operationId: post-transactions-fuelcoupons
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -363,7 +370,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InfoPosFuelcouponReversalOutput"
+                $ref: "#/components/schemas/InfoFuelcouponTransactionOutput"
+        "400":
+          description: Bad Request. The body is malformed, the `transaction_code` field is missing or empty, or the `code` of a non oil article is not numeric (`SI001`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoFuelcouponTransactionOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoFuelcouponTransactionOutput"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoFuelcouponTransactionOutput"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoFuelcouponTransactionOutput"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoFuelcouponTransactionOutput"
       security:
         - Cognito: []
       servers:
@@ -376,10 +413,9 @@ paths:
       tags:
         - Fuelcoupons
       summary: Reversal fuelcoupon transaction
-      description: Send transactionid for reversal fuelcoupon request
       operationId: fc-reversal
       requestBody:
-        description: ""
+        required: true
         content:
           application/json:
             schema:
@@ -391,21 +427,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FuelcouponReversalOutput"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelcouponReversalOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelcouponReversalOutput"
         "403":
           description: Forbidden
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        "500":
-          description: Internal Server Error
+                $ref: "#/components/schemas/FuelcouponReversalOutput"
+        "404":
+          description: Not Found. The transaction to be reversed has not been found (`SI003`).
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InfoPosFuelcouponReversalOutput"
+                $ref: "#/components/schemas/FuelcouponReversalOutput"
+        "500":
+          description: Internal Server Error. Error while reading data (`SI004`), error returned by the fuel coupon validator (`SI006`) or unexpected error (`SI999`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelcouponReversalOutput"
       security:
         - Cognito: []
       servers:
@@ -418,10 +469,29 @@ paths:
       tags:
         - Fuelcoupons
       summary: Automatic reversal fuelcoupon transaction
-      description: The endpoint is used to automatically reverse a fuel coupon transaction.
+      description: |-
+        The endpoint is used to automatically reverse a fuel coupon transaction. The transaction to be reversed is identified by `original_transaction_code` and `original_transaction_date_time`.
+
+        The terminal is identified by the Cognito username of the caller and must be enabled for the fuel coupon circuit.
+
+        The outcome of the request is described by the `status_code` field of the response body:
+
+        | HTTP status | `status_code` | Meaning |
+        |-------------|---------------|---------|
+        | `200` | `SI000` | Transaction reversed |
+        | `400` | `SI001` | Malformed body, or missing or empty `original_transaction_code` |
+        | `401` | `SI005` | Unable to identify the terminal |
+        | `403` | `SI002` | The terminal is not enabled for the fuel coupon circuit |
+        | `404` | `SI003` | No revertable transaction found |
+        | `409` | `SI009` | Transaction already reversed |
+        | `500` | `SI004` | Error while reading data |
+        | `500` | `SI006` | Error returned by the fuel coupon validator |
+        | `500` | `SI999` | Unexpected error |
+
+        If the call to the fuel coupon validator fails, the HTTP status returned by the validator is forwarded to the caller with status code `SI006`.
       operationId: post-automatic-fc-reversal
       requestBody:
-        description: ""
+        required: true
         content:
           application/json:
             schema:
@@ -429,7 +499,7 @@ paths:
               properties:
                 receipt_number:
                   type: integer
-                  description: Receipt number
+                  description: Receipt number. Currently not used by the service
                 original_transaction_code:
                   type: string
                   description: Code of the transaction to be reversed
@@ -439,33 +509,95 @@ paths:
                   format: date-time
                 stan:
                   type: number
+                  description: Stan of the transaction. Currently not used by the service
               required:
-                - receipt_number
                 - original_transaction_code
                 - original_transaction_date_time
-                - stan
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InfoPosFuelcouponReversalOutput"
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    description: Outcome of the request (see Status codes)
+                required:
+                  - status_code
         "400":
-          description: Bad Request
+          description: Bad Request. The body is malformed or the `original_transaction_code` field is missing or empty (`SI001`).
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  message:
+                  status_code:
                     type: string
-        "500":
-          description: Internal Server Error
+                    description: Outcome of the request (see Status codes)
+                required:
+                  - status_code
+        "401":
+          description: Unauthorized. Unable to identify the terminal from the request (`SI005`).
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InfoPosFuelcouponReversalOutput"
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    description: Outcome of the request (see Status codes)
+                required:
+                  - status_code
+        "403":
+          description: Forbidden. The terminal is not enabled for the fuel coupon circuit (`SI002`).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    description: Outcome of the request (see Status codes)
+                required:
+                  - status_code
+        "404":
+          description: Not Found. No revertable transaction has been found (`SI003`).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    description: Outcome of the request (see Status codes)
+                required:
+                  - status_code
+        "409":
+          description: Conflict. The transaction has already been reversed (`SI009`).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    description: Outcome of the request (see Status codes)
+                required:
+                  - status_code
+        "500":
+          description: Internal Server Error. Error while reading data (`SI004`), error returned by the fuel coupon validator (`SI006`) or unexpected error (`SI999`).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    description: Outcome of the request (see Status codes)
+                required:
+                  - status_code
       security:
         - Cognito: []
       servers:
@@ -482,6 +614,71 @@ components:
           tokenUrl: "tbd"
           scopes: {}
   schemas:
+    InfoFuelcouponTransactionOutput:
+      title: InfoFuelcouponTransactionOutput
+      type: object
+      properties:
+        transactions:
+          type: array
+          description: "Details of the registered supply, one element for each fuel coupon / article pair. Not present in case of error."
+          items:
+            $ref: "#/components/schemas/TransactionOutput"
+        status_code:
+          type: string
+          description: Outcome of the request (see Status codes)
+      required:
+        - status_code
+    TransactionOutput:
+      title: TransactionOutput
+      type: object
+      description: "Amount paid with a single fuel coupon for a single article. Fields with an empty value (`0`, `false`, empty string) are omitted."
+      properties:
+        payment_name:
+          type: string
+          description: "Name of the payment method, always `BUONO`"
+        fuelcoupon_code:
+          type: string
+          description: Fuelcoupon full code
+        fuelcoupon_number:
+          type: integer
+          description: Fuelcoupon number
+        stan:
+          type: integer
+          description: Stan received in the request
+        amount:
+          type: number
+          description: Amount paid with the fuelcoupon for the article
+        date_time:
+          type: string
+          format: date-time
+          description: Transaction date time received in the request
+        progressive_number:
+          type: integer
+          description: Progressive number of the article in the supply
+        article_id:
+          type: integer
+          description: Article id
+        article_code:
+          type: integer
+          description: Article code
+        ov_supply_id:
+          type: integer
+          description: Overview supply id received in the request for the article
+        article_name:
+          type: string
+          description: Article name
+        unit_price:
+          type: number
+          description: Article unit price
+        measure_unit:
+          type: string
+          description: Unit of measure of the quantity
+        is_oil:
+          type: boolean
+          description: "If true, is an oil product, otherwise is a not oil product"
+        quantity:
+          type: number
+          description: Quantity paid with the fuelcoupon
     InfoPosFuelcouponReversalOutput:
       title: InfoPosTransactionReversal
       type: object
@@ -779,7 +976,7 @@ components:
           type: object
           properties: 
             total_amount: 
-              type: numbber
+              type: number
             fuelcoupons:
               type: array
               items:
@@ -788,9 +985,12 @@ components:
           type: string
     FuelcouponReversalValidationInput:
       type: object
+      title: FuelcouponReversalValidationInput
       properties:
         fuelcoupons_codes:
           type: array
+          description: Full codes of the fuelcoupons to be validated. Codes longer than 25 characters are truncated to the first 25 characters.
+          minItems: 1
           items:
             type: string
       required:
@@ -799,29 +999,15 @@ components:
       type: object
       title: FuelcouponReversalValidationOutput
       properties:
-        display:
-          type: array
-          description: Display data
-          items:
-            type: object
-            properties:
-              font:
-                type: string
-              message:
-                type: string
-            required:
-              - font
-              - message
         transaction_code:
           type: string
-          description: This identifier is used to relates the fuelcoupons to the same transaction. The identifier returned here must be used for further validations (if needed) and for the final supply operation.
         err_fuel_coupon_number:
           type: integer
-          description: Number of the first fuel coupon that threw a validation error (if any)
+        status_code:
+          type: string
       required:
-        - display
         - transaction_code
-      examples: []
+        - status_code
     FuelcouponValidationInput:
       type: object
       properties:
@@ -883,21 +1069,24 @@ components:
       properties:
         transaction_number:
           type: integer
+          description: Transaction number
         transaction_code:
           type: string
-        supplies_ov_ids:
-          type: array
-          items:
-            type: integer
+          description: Transaction code used for the validation of the fuelcoupons
         articles:
           type: array
+          description: Articles supplied in the transaction
           items:
             $ref: "#/components/schemas/Products"
         date_time:
           type: string
           format: date-time
+          description: Transaction date time
         stan:
           type: integer
+          description: Stan of the transaction. It is returned as is in the response
+      required:
+        - transaction_code
     Products:
       title: Products
       type: object
@@ -918,16 +1107,8 @@ components:
         is_oil:
           type: boolean
           description: "If true, is an oil product, otherwise is a not oil product"
-        discount_value:
-          type: number
-          description: Conditional data - Present only if there's a discount applied. Representing the applied discount value on unit price
-        discounted_amount:
-          type: number
-          description: Conditional data - Present only if there's a discount applied. Representing the amount with applied discount
         ov_supply_id:
           type: integer
-        measure_unit:
-          type: string
       required:
         - code
         - quantity
@@ -936,44 +1117,38 @@ components:
         - is_oil
     FuelcouponTransactionReversalInput:
       type: object
+      title: FuelcouponTransactionReversalInput
       properties:
         transaction_number:
           type: integer
+          description: Number of the reversal transaction
         stan:
           type: integer
+          description: Stan of the reversal transaction. Currently not used by the service
         transaction_code:
           type: string
+          description: Code of the reversal transaction
         original_transaction_code:
           $ref: "#/components/schemas/transaction_code"
+          description: Code of the transaction to be reversed
         reversal_transaction_date_time:
           type: string
+          format: date-time
+          description: Date time of the reversal transaction
       required:
         - transaction_number
-        - stan
         - transaction_code
         - reversal_transaction_date_time
     transaction_code:
       type: string
     FuelcouponReversalOutput:
       type: object
+      title: FuelcouponReversalOutput
       properties:
-        ticket:
-          type: array
-          items:
-            type: object
-            properties:
-              content:
-                type: string
-              font:
-                type: string
-        display:
-          type: array
-          items:
-            type: object
-            properties:
-              content:
-                type: string
-              font:
-                type: string
+        status_code:
+          type: string
+          description: Outcome of the request (see Status codes)
+      required:
+        - status_code
 security:
   - Cognito: []
