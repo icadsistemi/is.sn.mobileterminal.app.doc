@@ -20,6 +20,7 @@ info:
     | `SI007` | Fuel Coupon Not Valid | The fuel coupon is not valid |
     | `SI008` | Fuel Coupon Not Allowed | The fuel coupon is not allowed for the request |
     | `SI009` | Transaction Already Reversed | The transaction has already been reversed |
+    | `SI010` | Supply Already Registered | The supply has already been registered |
     | `SI999` | Generic error | Unexpected error |
 servers:
   - url: "https://tbd.dev.icadsistemi.com/v1"
@@ -53,12 +54,28 @@ paths:
           description: Unauthorized
         "403":
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetClosureOutput"
         "404":
-          description: NotFound
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetClosureOutput"
         "422":
-          description: Unprocessable Entity (WebDAV)
+          description: Unprocessable Entity (malformed or missing input)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetClosureOutput"
         "500":
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetClosureOutput"
       security:
         - Cognito: []
       servers:
@@ -82,10 +99,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResetClosureOutput"
+        "401":
+          description: Unauthorized
         "403":
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetClosureOutput"
         "500":
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetClosureOutput"
       security:
         - Cognito: []
       servers:
@@ -108,12 +135,28 @@ paths:
                 $ref: "#/components/schemas/Configuration"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
         "403":
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
         "404":
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
         "500":
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
       security:
         - Cognito: []
       servers:
@@ -168,16 +211,52 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigurationAckOutput"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigurationAckOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigurationAckOutput"
         "403":
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigurationAckOutput"
         "404":
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigurationAckOutput"
         "409":
           description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigurationAckOutput"
         "422":
           description: Unprocessable Entity (malformed or missing input)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigurationAckOutput"
         "500":
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigurationAckOutput"
       security:
         - Cognito: []
       servers:
@@ -197,9 +276,6 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/FuelcouponAbortInput"
-          application/xml:
-            schema:
-              type: object
       responses:
         "200":
           description: OK
@@ -209,10 +285,28 @@ paths:
                 $ref: "#/components/schemas/FuelcouponAbortOutput"
         "400":
           description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelcouponAbortOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelcouponAbortOutput"
         "403":
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelcouponAbortOutput"
         "500":
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelcouponAbortOutput"
       security:
         - Cognito: []
       servers:
@@ -241,12 +335,28 @@ paths:
                 $ref: "#/components/schemas/ActivateFuelcouponOutput"
         "400":
           description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivateFuelcouponOutput"
         "403":
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivateFuelcouponOutput"
         "422":
           description: Unprocessable Entity (malformed or missing input)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivateFuelcouponOutput"
         "500":
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivateFuelcouponOutput"
       security:
         - Cognito: []
       servers:
@@ -269,25 +379,41 @@ paths:
             type: string
       responses:
         "200":
-          description: OK. `status_code` is `SI000` if a reversable transaction has been found, `SI009` if the transaction has already been reversed.
+          description: OK
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/InfoPosFuelcouponReversalOutput"
         "400":
-          description: Bad Request. The `fuelcoupon_code` query parameter is missing or empty (`SI001`).
+          description: Bad Request
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/InfoPosFuelcouponReversalOutput"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoPosFuelcouponReversalOutput"
         "403":
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoPosFuelcouponReversalOutput"
         "404":
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoPosFuelcouponReversalOutput"
         "500":
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoPosFuelcouponReversalOutput"
       security:
         - Cognito: []
       servers:
@@ -316,8 +442,6 @@ paths:
                 $ref: "#/components/schemas/FuelcouponReversalValidationOutput"
         "400":
           description: Bad Request
-        "403":
-          description: Forbidden
         "500":
           description: Internal Server Error
       security:
@@ -341,6 +465,24 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelcouponValidationOutput"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelcouponValidationOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelcouponValidationOutput"
+        "500":
+          description: Internal Server Error
           content:
             application/json:
               schema:
@@ -372,7 +514,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/InfoFuelcouponTransactionOutput"
         "400":
-          description: Bad Request. The body is malformed, the `transaction_code` field is missing or empty, or the `code` of a non oil article is not numeric (`SI001`).
+          description: Bad Request
           content:
             application/json:
               schema:
@@ -446,13 +588,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/FuelcouponReversalOutput"
         "404":
-          description: Not Found. The transaction to be reversed has not been found (`SI003`).
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/FuelcouponReversalOutput"
         "500":
-          description: Internal Server Error. Error while reading data (`SI004`), error returned by the fuel coupon validator (`SI006`) or unexpected error (`SI999`).
+          description: Internal Server Error
           content:
             application/json:
               schema:
@@ -469,26 +611,7 @@ paths:
       tags:
         - Fuelcoupons
       summary: Automatic reversal fuelcoupon transaction
-      description: |-
-        The endpoint is used to automatically reverse a fuel coupon transaction. The transaction to be reversed is identified by `original_transaction_code` and `original_transaction_date_time`.
-
-        The terminal is identified by the Cognito username of the caller and must be enabled for the fuel coupon circuit.
-
-        The outcome of the request is described by the `status_code` field of the response body:
-
-        | HTTP status | `status_code` | Meaning |
-        |-------------|---------------|---------|
-        | `200` | `SI000` | Transaction reversed |
-        | `400` | `SI001` | Malformed body, or missing or empty `original_transaction_code` |
-        | `401` | `SI005` | Unable to identify the terminal |
-        | `403` | `SI002` | The terminal is not enabled for the fuel coupon circuit |
-        | `404` | `SI003` | No revertable transaction found |
-        | `409` | `SI009` | Transaction already reversed |
-        | `500` | `SI004` | Error while reading data |
-        | `500` | `SI006` | Error returned by the fuel coupon validator |
-        | `500` | `SI999` | Unexpected error |
-
-        If the call to the fuel coupon validator fails, the HTTP status returned by the validator is forwarded to the caller with status code `SI006`.
+      description: The endpoint is used to automatically reverse a fuel coupon transaction.
       operationId: post-automatic-fc-reversal
       requestBody:
         required: true
@@ -523,11 +646,10 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    description: Outcome of the request (see Status codes)
                 required:
                   - status_code
         "400":
-          description: Bad Request. The body is malformed or the `original_transaction_code` field is missing or empty (`SI001`).
+          description: Bad Request
           content:
             application/json:
               schema:
@@ -535,11 +657,10 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    description: Outcome of the request (see Status codes)
                 required:
                   - status_code
         "401":
-          description: Unauthorized. Unable to identify the terminal from the request (`SI005`).
+          description: Unauthorized
           content:
             application/json:
               schema:
@@ -547,11 +668,10 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    description: Outcome of the request (see Status codes)
                 required:
                   - status_code
         "403":
-          description: Forbidden. The terminal is not enabled for the fuel coupon circuit (`SI002`).
+          description: Forbidden
           content:
             application/json:
               schema:
@@ -559,11 +679,10 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    description: Outcome of the request (see Status codes)
                 required:
                   - status_code
         "404":
-          description: Not Found. No revertable transaction has been found (`SI003`).
+          description: Not Found
           content:
             application/json:
               schema:
@@ -571,11 +690,10 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    description: Outcome of the request (see Status codes)
                 required:
                   - status_code
         "409":
-          description: Conflict. The transaction has already been reversed (`SI009`).
+          description: Conflict
           content:
             application/json:
               schema:
@@ -583,11 +701,10 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    description: Outcome of the request (see Status codes)
                 required:
                   - status_code
         "500":
-          description: Internal Server Error. Error while reading data (`SI004`), error returned by the fuel coupon validator (`SI006`) or unexpected error (`SI999`).
+          description: Internal Server Error
           content:
             application/json:
               schema:
@@ -595,7 +712,6 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    description: Outcome of the request (see Status codes)
                 required:
                   - status_code
       security:
@@ -704,10 +820,7 @@ components:
           type: string
           description: Code used when performing the actual revesal request
         supplies:
-          description: supplies model of the transaction
-          type: array
-          items:
-            $ref: "#/components/schemas/SuppliesFuelcoupon"
+          $ref: "#/components/schemas/SuppliesFuelcoupon"
         status_code:
           type: string
           description: Outcome of the request (see Status codes)
@@ -748,9 +861,6 @@ components:
           fuelcoupon_number:
             type: string
             description: Fuelcoupon number used for the transaction
-          ov_id:
-            type: integer
-            description: "Conditional attribute. Present only if the reverted transaction is selected using data collection "
           precision:
             type: integer
           measure_unit:
@@ -776,6 +886,12 @@ components:
     ResetClosureOutput:
       type: object
       title: ResetClosureOutput
+      properties:
+        status_code:
+          type: string
+    ConfigurationAckOutput:
+      type: object
+      title: ConfigurationAckOutput
       properties:
         status_code:
           type: string
@@ -935,6 +1051,7 @@ components:
         * `SI007` - Fuel Coupon Not Valid
         * `SI008` - Fuel Coupon Not Allowed
         * `SI009` - Transaction Already Reversed
+        * `SI010` - Supply Already Registered
         * `SI999` - Generic error
       enum:
         - SI000
@@ -947,6 +1064,7 @@ components:
         - SI007
         - SI008
         - SI009
+        - SI010
         - SI999
       examples:
         - SI000
@@ -968,10 +1086,14 @@ components:
           type: array
           items:
             type: string
+        stan:
+          type: integer
     ActivateFuelcouponOutput:
       type: object
       title: ActivateFuelcouponOutput
       properties:
+        error:
+          type: string
         activation_details:
           type: object
           properties: 
@@ -999,6 +1121,26 @@ components:
       type: object
       title: FuelcouponReversalValidationOutput
       properties:
+        action_code:
+          type: string
+        ticket:
+          type: array
+          items:
+            type: object
+            properties:
+              content:
+                type: string
+              font:
+                type: string
+        display:
+          type: array
+          items:
+            type: object
+            properties:
+              content:
+                type: string
+              font:
+                type: string
         transaction_code:
           type: string
         err_fuel_coupon_number:
@@ -1022,24 +1164,11 @@ components:
       type: object
       title: FuelcouponValidationOutput
       properties:
-        display:
-          type: array
-          description: Display data
-          items:
-            type: object
-            properties:
-              font:
-                type: string
-              message:
-                type: string
-            required:
-              - font
-              - message
         transaction_code:
           type: string
           description: "This identifier is used to relates the fuelcoupons to the same transaction. So for the same transaction, if the user wants to use multiple fuelcoupons, the terminal should send everytime the same transaction_id for each call to this API"
         locked_amount:
-          type: integer
+          type: number
           description: Available amount for the used fuelcoupon
         fuel_coupon_number:
           type: integer
@@ -1055,13 +1184,11 @@ components:
         fuel_coupon_type:
           type: integer
           description: "Type of the fuel coupon, could be 0 for one shot fuelcoupons or 1 for multi use fuelcoupons"
+        status_code:
+          type: string
       required:
-        - display
-        - transaction_code
-        - locked_amount
-        - fuel_coupon_number
-        - fuel_coupon_welfare
-        - fuel_coupon_vat
+        - fuel_coupon_type
+        - status_code
       examples: []
     FuelcouponTransactionInput:
       type: object
