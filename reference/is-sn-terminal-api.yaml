@@ -497,7 +497,7 @@ paths:
   /transactions/fuelcoupons:
     post:
       tags:
-        - Fuelcoupons
+        - Transactions
       summary: Fuelcoupon transaction
       operationId: post-transactions-fuelcoupons
       requestBody:
@@ -553,7 +553,7 @@ paths:
   /transactions/fuelcoupons/reversal:
     post:
       tags:
-        - Fuelcoupons
+        - Transactions
       summary: Reversal fuelcoupon transaction
       operationId: fc-reversal
       requestBody:
@@ -609,7 +609,7 @@ paths:
   /transactions/fuelcoupons/reversal/auto:
     post:
       tags:
-        - Fuelcoupons
+        - Transactions
       summary: Automatic reversal fuelcoupon transaction
       description: The endpoint is used to automatically reverse a fuel coupon transaction.
       operationId: post-automatic-fc-reversal
