@@ -877,10 +877,15 @@ components:
         end_date:
           type: string
           format: date-time
-        amount:
-          type: number
-        operations:
-          type: integer
+        product_details:
+          type: array
+          items:
+            type: object
+            properties:
+              amount:
+                type: number
+              operations:
+                type: integer
         status_code:
           type: string
     ResetClosureOutput:
