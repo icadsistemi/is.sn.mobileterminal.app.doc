@@ -882,6 +882,8 @@ components:
           items:
             type: object
             properties:
+              product:
+                type: string
               amount:
                 type: number
               operations:
